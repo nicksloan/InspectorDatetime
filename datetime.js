@@ -2,12 +2,66 @@ var window;
 
 function DateInput(input) {
     this.state = 0;
-    input.value = this.parts.join(this.separator);
+    input.value = this.parts.join('');
 
     this.input = input;
 
     this.register_handlers();
 }
+
+DateInput.prototype.separator = '/';
+
+DateInput.prototype.parts = [
+    {
+        length: 4,
+        fill: 'yyyy',
+        name: 'year',
+        toString: function() {
+            return this.fill;
+        }
+    },
+    '/',
+    {
+        length: 2,
+        fill: 'mm',
+        name: 'month',
+        toString: function() {
+            return this.fill;
+        }
+    },
+    '/',
+    {
+        length: 2,
+        fill: 'dd',
+        name: 'day',
+        toString: function() {
+            return this.fill;
+        }
+    }
+];
+
+DateInput.prototype.selectField = function() {
+    if (this.state < 0 || this.state >= this.parts.length) {
+        // State out of bounds.
+    }
+
+    var start = 0;
+    for (var i = 0; i < this.state; i++) {
+        start += this.parts[i].length;
+    }
+
+    console.log(start);
+    console.log();
+
+    console.log(this.state);
+    console.log(this.parts);
+
+    var end = start + this.parts[this.state].length;
+    console.log(end);
+
+    this.input.setSelectionRange(start, end);
+
+};
 
 DateInput.prototype._get_current_field = function() {
     var string = this.input.value.substr(this.input.selectionStart, this.input.selectionEnd);
@@ -16,7 +70,32 @@ DateInput.prototype._get_current_field = function() {
 
     }
 
-    return
+    return;
+};
+
+DateInput.prototype.nextField = function() {
+    console.log('NEXT!');
+    if (this.state < (this.parts.length - 1)) {
+        this.state++;
+    }
+
+    if (typeof this.parts[this.state] === 'string') {
+        this.state++;
+    }
+
+    this.selectField();
+};
+
+DateInput.prototype.prevField = function() {
+    if (this.state > 0) {
+        this.state--;
+    }
+
+    if (typeof this.parts[this.state] === 'string') {
+        this.state--;
+    }
+
+    this.selectField();
 };
 
 DateInput.prototype.register_handlers = function() {
@@ -141,67 +220,6 @@ DateInput.prototype.handleYear = function(e) {
     } else if (e.keyCode == 40) {
         // Down
     }
-};
-
-DateInput.prototype.separator = '/';
-
-DateInput.prototype.parts = [
-    {
-        count: 4,
-        fill: 'yyyy',
-        name: 'year'
-    },
-    {
-        count: 2,
-        fill: 'mm',
-        name: 'month'
-    },
-    {
-        count: 2,
-        fill: 'dd',
-        name: 'day'
-    }
-];
-
-DateInput.prototype.nextField = function() {
-    console.log('NEXT!');
-    if (this.state < (this.parts.length - 1)) {
-        this.state++;
-    }
-    this.selectField();
-};
-
-DateInput.prototype.prevField = function() {
-    if (this.state > 0) {
-        this.state--;
-    }
-    this.selectField();
-};
-
-DateInput.prototype.selectField = function() {
-    if (this.state < 0 || this.state > 2) {
-        // State out of bounds.
-    }
-
-    var start = 0;
-    for (var i = 0; i < this.state; i++) {
-        start = start + this.parts[i].length;
-    }
-
-    console.log(start);
-    // Account for the separators.
-    start = start + this.state;
-
-    console.log()
-
-    console.log(this.state);
-    console.log(this.parts);
-
-    var end = start + this.parts[this.state].length;
-    console.log(end);
-
-    this.input.setSelectionRange(start, end);
-
 };
 
 DateInput.prototype.is_valid_day = function(day, month, year) {
