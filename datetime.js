@@ -10,6 +10,13 @@ function DateInput(input) {
 }
 
 DateInput.prototype._get_current_field = function() {
+    var string = this.input.value.substr(this.input.selectionStart, this.input.selectionEnd);
+
+    for (var i; i < this.parts.length; i++) {
+
+    }
+
+    return
 };
 
 DateInput.prototype.register_handlers = function() {
@@ -139,9 +146,21 @@ DateInput.prototype.handleYear = function(e) {
 DateInput.prototype.separator = '/';
 
 DateInput.prototype.parts = [
-    'yyyy',
-    'mm',
-    'dd',
+    {
+        count: 4,
+        fill: 'yyyy',
+        name: 'year'
+    },
+    {
+        count: 2,
+        fill: 'mm',
+        name: 'month'
+    },
+    {
+        count: 2,
+        fill: 'dd',
+        name: 'day'
+    }
 ];
 
 DateInput.prototype.nextField = function() {
