@@ -13,15 +13,6 @@ DateInput.prototype.separator = '/';
 
 DateInput.prototype.parts = [
     {
-        length: 4,
-        fill: 'yyyy',
-        name: 'year',
-        toString: function() {
-            return this.fill;
-        }
-    },
-    '/',
-    {
         length: 2,
         fill: 'mm',
         name: 'month',
@@ -37,7 +28,16 @@ DateInput.prototype.parts = [
         toString: function() {
             return this.fill;
         }
-    }
+    },
+    '/',
+    {
+        length: 4,
+        fill: 'yyyy',
+        name: 'year',
+        toString: function() {
+            return this.fill;
+        }
+    },
 ];
 
 DateInput.prototype.selectField = function() {
