@@ -75,27 +75,33 @@ DateInput.prototype._get_current_field = function() {
 
 DateInput.prototype.nextField = function() {
     console.log('NEXT!');
-    if (this.state < (this.parts.length - 1)) {
-        this.state++;
+    if (this.state >= (this.parts.length - 1)) {
+        return false;
     }
+
+    this.state++;
 
     if (typeof this.parts[this.state] === 'string') {
         this.state++;
     }
 
     this.selectField();
+    return true;
 };
 
 DateInput.prototype.prevField = function() {
-    if (this.state > 0) {
-        this.state--;
+    if (this.state <= 0) {
+        return false;
     }
+
+    this.state--;
 
     if (typeof this.parts[this.state] === 'string') {
         this.state--;
     }
 
     this.selectField();
+    return true;
 };
 
 DateInput.prototype.register_handlers = function() {
@@ -121,6 +127,16 @@ DateInput.prototype.register_handlers = function() {
             instance.nextField();
 
             //this.setSelectionRange(6, 10);
+        } else if (e.keyCode == 9) {
+            if (e.shiftKey) {
+                if (!instance.prevField()) {
+                    return;
+                }
+            } else {
+                if (!instance.nextField()) {
+                    return;
+                }
+            }
         }
 
         /* Day */
@@ -148,13 +164,30 @@ DateInput.prototype.register_handlers = function() {
         instance.state = 0;
         instance.selectField();
         e.preventDefault();
-        e.stopImmediatePropagation();
+        //e.stopImmediatePropagation();
     });
 
     this.input.addEventListener('mousedown', function(e) {
         this.focus();
         e.preventDefault();
         e.stopImmediatePropagation();
+    });
+
+    this.input.addEventListener('keyup', function(e) {
+        console.log('Keyup', e);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    });
+
+    window.addEventListener('focus', function(e) {
+        /*
+        console.log('Window focus', e);
+        if (e.target == instance.input) {
+            console.log('YES!');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
+        */
     });
 
 };
