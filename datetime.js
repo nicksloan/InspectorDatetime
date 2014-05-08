@@ -1,48 +1,31 @@
 var window;
 
-function DateInput(input) {
-    this.state = 0;
-    input.value = this.parts.join('');
-
+function MaskedInput(input, parts) {
     this.input = input;
+    this.parts = parts;
 
-    this.register_handlers();
+    this.data = {};
+
+    for (var i = 0; i < this.parts.length; i++) {
+        if (typeof this.parts[i] === 'string') {
+            continue;
+        }
+
+        this.data[this.parts[i].name] = null;
+    }
+
+    this.updateView();
+    this._register_handlers();
 }
 
-DateInput.prototype.separator = '/';
+MaskedInput.prototype.state = 0;
 
-DateInput.prototype.parts = [
-    {
-        length: 2,
-        fill: 'mm',
-        name: 'month',
-        toString: function() {
-            return this.fill;
-        }
-    },
-    '/',
-    {
-        length: 2,
-        fill: 'dd',
-        name: 'day',
-        toString: function() {
-            return this.fill;
-        }
-    },
-    '/',
-    {
-        length: 4,
-        fill: 'yyyy',
-        name: 'year',
-        toString: function() {
-            return this.fill;
-        }
-    },
-];
+MaskedInput.prototype.selectField = function(e) {
+    var instance = this;
 
-DateInput.prototype.selectField = function() {
     if (this.state < 0 || this.state >= this.parts.length) {
-        // State out of bounds.
+        console.log('Out of bounds.');
+        this.state = 0;
     }
 
     var start = 0;
@@ -50,20 +33,147 @@ DateInput.prototype.selectField = function() {
         start += this.parts[i].length;
     }
 
-    console.log(start);
-    console.log();
-
-    console.log(this.state);
-    console.log(this.parts);
-
     var end = start + this.parts[this.state].length;
-    console.log(end);
 
-    this.input.setSelectionRange(start, end);
+    setTimeout((function() {
+        instance.input.setSelectionRange(start, end);
+    }), 0);
 
 };
 
-DateInput.prototype._get_current_field = function() {
+MaskedInput.prototype.handleKeys = function(e) {
+    if (e.keyCode == 37) {
+        // Left
+        this.prevField();
+    } else if (e.keyCode == 39) {
+        // Right
+        this.nextField();
+    } else if (e.keyCode == 9) {
+        if (e.shiftKey) {
+            if (!this.prevField()) {
+                return;
+            }
+        } else {
+            if (!this.nextField()) {
+                return;
+            }
+        }
+    } else {
+        if ('sequence' in this.parts[this.state]) {
+            if (e.keyCode == 38) {
+                this.nextSequence();
+            } else if (e.keyCode == 40) {
+                this.prevSequence();
+            }
+        } else if ('choice' in this.parts[this.state]) {
+            if (e.keyCode == 38) {
+                this.nextChoice();
+            } else if (e.keyCode == 40) {
+                this.prevChoice();
+            }
+        } else {
+            //this.keypress(e);
+        }
+        this.updateView();
+    }
+
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    this.selectField();
+};
+
+MaskedInput.prototype.nextSequence = function(e) {
+    var part = this.parts[this.state];
+
+    if (this.data[part.name] === null) {
+        this.data[part.name] = part.sequence.min;
+        return;
+    }
+
+    if (this.data[part.name] < (part.sequence.min + part.sequence.range - part.sequence.step)) {
+        this.data[part.name] += part.sequence.step;
+    } else {
+        this.data[part.name] = part.sequence.min;
+    }
+};
+
+MaskedInput.prototype.prevSequence = function(e) {
+    var part = this.parts[this.state];
+
+    if (this.data[part.name] === null) {
+        this.data[part.name] = part.sequence.min + part.sequence.range - part.sequence.step;
+        return;
+    }
+
+    if (this.data[part.name] >= (part.sequence.min + part.sequence.step)) {
+        this.data[part.name] -= part.sequence.step;
+    } else {
+        this.data[part.name] = part.sequence.min + part.sequence.range - part.sequence.step;
+    }
+};
+
+MaskedInput.prototype.nextChoice = function(e) {
+    var part = this.parts[this.state];
+
+    if (this.data[part.name] === null) {
+        this.data[part.name] = 0;
+        return;
+    }
+
+    if (this.data[part.name] < part.choice.length - 1) {
+        this.data[part.name]++;
+    } else {
+        this.data[part.name] = 0;
+    }
+};
+
+MaskedInput.prototype.prevChoice = function(e) {
+    var part = this.parts[this.state];
+
+    if (this.data[part.name] === null) {
+        this.data[part.name] = part.choice.length - 1;
+        return;
+    }
+
+    if (this.data[part.name] > 0) {
+        this.data[part.name]--;
+    } else {
+        this.data[part.name] = part.choice.length - 1;
+    }
+};
+
+MaskedInput.prototype.updateView = function(e) {
+    var output = '';
+
+    for (var i = 0; i < this.parts.length; i++) {
+        if (typeof this.parts[i] === 'string') {
+            output += this.parts[i];
+        } else {
+            if (this.data[this.parts[i].name] === null) {
+                output += this.parts[i].fill;
+            } else {
+                if ('sequence' in this.parts[i]) {
+                    output += this.padNumber(
+                        this.data[this.parts[i].name],
+                        this.parts[i].length,
+                        '0'
+                    );
+                } else if ('choice' in this.parts[i]) {
+                    output += this.parts[i].choice[this.data[this.parts[i].name]];
+                }
+            }
+        }
+    }
+
+    this.input.value = output;
+};
+
+MaskedInput.prototype.padNumber = function(n, pad_l, pad_c) {
+    var padding = Array(pad_l + 1).join(pad_c);
+    return (n < 0 ? '-' : '') + (padding + n.toString().replace('-', '')).slice(0 - (pad_l));
+};
+
+MaskedInput.prototype._get_current_field = function() {
     var string = this.input.value.substr(this.input.selectionStart, this.input.selectionEnd);
 
     for (var i; i < this.parts.length; i++) {
@@ -73,8 +183,7 @@ DateInput.prototype._get_current_field = function() {
     return;
 };
 
-DateInput.prototype.nextField = function() {
-    console.log('NEXT!');
+MaskedInput.prototype.nextField = function() {
     if (this.state >= (this.parts.length - 1)) {
         return false;
     }
@@ -89,7 +198,7 @@ DateInput.prototype.nextField = function() {
     return true;
 };
 
-DateInput.prototype.prevField = function() {
+MaskedInput.prototype.prevField = function() {
     if (this.state <= 0) {
         return false;
     }
@@ -104,95 +213,29 @@ DateInput.prototype.prevField = function() {
     return true;
 };
 
-DateInput.prototype.register_handlers = function() {
-    var instance = this;
-
-    this.input.addEventListener('keydown', function(e) {
-        this.state = 0;
-
-        console.log('Keydown', e);
-        var value;
-        var output;
-
-        console.log(e.keyCode);
-        console.log(String.fromCharCode(e.which));
-
-        if (e.keyCode == 37) {
-            // Left
-            instance.prevField();
-
-            //this.setSelectionRange(0, 2);
-        } else if (e.keyCode == 39) {
-            // Right
-            instance.nextField();
-
-            //this.setSelectionRange(6, 10);
-        } else if (e.keyCode == 9) {
-            if (e.shiftKey) {
-                if (!instance.prevField()) {
-                    return;
-                }
-            } else {
-                if (!instance.nextField()) {
-                    return;
-                }
-            }
-        }
-
-        /* Day */
-        if (this.selectionStart === 3) {
-            instance.handleDay(e);
-        }
-
-        /* Month */
-        if (this.selectionStart === 0) {
-            instance.handleMonth(e);
-        }
-
-        /* Year */
-        if (this.selectionStart === 6) {
-            instance.handleYear(e);
-        }
-
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-    });
-
-    this.input.addEventListener('focus', function(e) {
-        console.log('Focus', e);
-        instance.state = 0;
-        instance.selectField();
-        e.preventDefault();
-        //e.stopImmediatePropagation();
-    });
-
-    this.input.addEventListener('mousedown', function(e) {
-        this.focus();
-        e.preventDefault();
-        e.stopImmediatePropagation();
-    });
-
-    this.input.addEventListener('keyup', function(e) {
-        console.log('Keyup', e);
-        e.preventDefault();
-        e.stopImmediatePropagation();
-    });
-
-    window.addEventListener('focus', function(e) {
-        /*
-        console.log('Window focus', e);
-        if (e.target == instance.input) {
-            console.log('YES!');
-            e.preventDefault();
-            e.stopImmediatePropagation();
-        }
-        */
-    });
-
+MaskedInput.prototype.resetState = function() {
+    this.state = 0;
 };
 
-DateInput.prototype.days_in_months = {
+MaskedInput.prototype._register_handlers = function() {
+    var instance = this;
+
+    this.input.addEventListener('focus', function(e) {
+        instance.resetState();
+        instance.selectField();
+    });
+
+    this.input.addEventListener('click', function(e) {
+        instance.selectField();
+    });
+
+    this.input.addEventListener('keydown', function(e) {
+        instance.handleKeys(e);
+    });
+};
+
+/*
+MaskedInput.prototype.days_in_months = {
     1: 31,
     2: 28,
     3: 31,
@@ -208,7 +251,7 @@ DateInput.prototype.days_in_months = {
     mm: 31
 };
 
-DateInput.prototype.handleMonth = function(e) {
+MaskedInput.prototype.handleMonth = function(e) {
     if (e.keyCode == 38) {
         // Up
         value++;
@@ -228,7 +271,7 @@ DateInput.prototype.handleMonth = function(e) {
     }
 };
 
-DateInput.prototype.handleDay = function(e) {
+MaskedInput.prototype.handleDay = function(e) {
     if (e.keyCode == 38) {
         // Up
         value++;
@@ -247,7 +290,7 @@ DateInput.prototype.handleDay = function(e) {
     }
 };
 
-DateInput.prototype.handleYear = function(e) {
+MaskedInput.prototype.handleYear = function(e) {
     if (e.keyCode == 38) {
         // Up
     } else if (e.keyCode == 40) {
@@ -255,7 +298,7 @@ DateInput.prototype.handleYear = function(e) {
     }
 };
 
-DateInput.prototype.is_valid_day = function(day, month, year) {
+MaskedInput.prototype.is_valid_day = function(day, month, year) {
     var leapday;
 
     int_day = parseInt(day);
@@ -286,7 +329,7 @@ DateInput.prototype.is_valid_day = function(day, month, year) {
 
 };
 
-DateInput.prototype.is_leap_year = function(year) {
+MaskedInput.prototype.is_leap_year = function(year) {
     if (year % 4 !== 0) {
         return false;
     } else if (year % 100 !== 0) {
@@ -297,6 +340,7 @@ DateInput.prototype.is_leap_year = function(year) {
         return false;
     }
 };
+*/
 
 /*
 input.onclick = function(e) {
@@ -379,6 +423,80 @@ input.onmousedown = function(e) {
 */
 
 window.addEventListener("DOMContentLoaded", function() {
-    var input = document.getElementById('text');
-    dt = new DateInput(input);
+    var input2 = document.getElementById('time');
+    mi2 = new MaskedInput(input2, [
+        {
+            length: 2,
+            fill: '--',
+            name: 'hour',
+            sequence: {
+                min: 1,
+                range: 12,
+                step: 1,
+                precision: 0
+            },
+            toString: function() {
+                return this.fill;
+            }
+        },
+        ':',
+        {
+            length: 2,
+            fill: '--',
+            name: 'minute',
+            sequence: {
+                min: 0,
+                range: 60,
+                step: 1,
+                precision: 0
+            },
+            toString: function() {
+                return this.fill;
+            }
+        },
+        ' ',
+        {
+            length: 2,
+            fill: '--',
+            name: 'meridian',
+            choice: [
+                'AM',
+                'PM'
+            ],
+            toString: function() {
+                return this.fill;
+            }
+        },
+    ]);
+
+    var input = document.getElementById('date');
+    mi = new MaskedInput(input, [
+        {
+            length: 2,
+            fill: 'mm',
+            name: 'month',
+            toString: function() {
+                return this.fill;
+            }
+        },
+        '/',
+        {
+            length: 2,
+            fill: 'dd',
+            name: 'day',
+            toString: function() {
+                return this.fill;
+            }
+        },
+        '/',
+        {
+            length: 4,
+            fill: 'yyyy',
+            name: 'year',
+            toString: function() {
+                return this.fill;
+            }
+        },
+    ]);
+
 }, true);
