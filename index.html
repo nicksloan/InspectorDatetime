@@ -1,0 +1,61 @@
+<!doctype html5>
+<html>
+<head>
+    <title>Inspector Datetime</title>
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.js"></script>
+    <script src="datetime.js"></script>
+    <style>
+        input.timepicker {
+            width: 2em;
+            margin: auto 0;
+            box-shadow: none;
+        }
+
+        input.timepicker:focus {
+            border-color: auto;
+            box-shadow: none;
+            outline: 0;
+        }
+
+        input.timepicker.hour {
+            border-right: none;
+            border-bottom-right-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        input.timepicker.minute {
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+        }
+
+        input.timepicker.meridian {
+            border-left: none;
+            border-bottom-left-radius: 0;
+            border-top-left-radius: 0;
+        }
+
+        .timepicker-container {
+            display: inline-flex;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        }
+
+        .timepicker-container:focus {
+            border-color: #66afe9;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
+            outline: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        Date: <input class="form-control" style="width: 170px;" type="date">
+        Time: <input id="butt" class="form-control" style="width: 170px;" type="time">
+
+        <input type="text" class="form-control" style="width: 170px;" id="time"><br>
+        <input type="text" class="form-control" style="width: 170px;" id="date"><br>
+    </div>
+</body>
+</html>
