@@ -3,7 +3,7 @@
 <head>
     <title>Inspector Datetime</title>
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.1/modernizr.js"></script>
     <script src="datetime.js"></script>
     <style>
         input.timepicker {
@@ -47,6 +47,92 @@
             outline: 0;
         }
     </style>
+    <script>
+    window.addEventListener("DOMContentLoaded", function() {
+        if (!Modernizr.inputtypes.time || !Modernizr.inputtypes.date) {
+            inputs = document.getElementsByTagName('input');
+
+            var obj;
+            for (var i = 0; i < inputs.length; i++) {
+                if (inputs[i].attributes.type.value === 'time' && !Modernizr.inputtypes.time) {
+                    obj = new MaskedInput(inputs[i], [
+                        {
+                            length: 2,
+                            fill: '--',
+                            name: 'hour',
+                            sequence: {
+                                min: 1,
+                                range: 12,
+                                step: 1,
+                                precision: 0
+                            },
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                        ':',
+                        {
+                            length: 2,
+                            fill: '--',
+                            name: 'minute',
+                            sequence: {
+                                min: 0,
+                                range: 60,
+                                step: 1,
+                                precision: 0
+                            },
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                        ' ',
+                        {
+                            length: 2,
+                            fill: '--',
+                            name: 'meridian',
+                            choice: [
+                                'AM',
+                                'PM'
+                            ],
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                    ]);
+                } else if (inputs[i].attributes.type.value === 'date' && !Modernizr.inputtypes.date) {
+                    obj = new MaskedInput(inputs[i], [
+                        {
+                            length: 2,
+                            fill: 'mm',
+                            name: 'month',
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                        '/',
+                        {
+                            length: 2,
+                            fill: 'dd',
+                            name: 'day',
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                        '/',
+                        {
+                            length: 4,
+                            fill: 'yyyy',
+                            name: 'year',
+                            toString: function() {
+                                return this.fill;
+                            }
+                        },
+                    ]);
+                }
+            }
+        }
+    }, true);
+    </script>
 </head>
 
 <body>
