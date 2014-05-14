@@ -1,5 +1,3 @@
-var window;
-
 function MaskedInput(input, parts) {
     this.input = input;
     this.parts = parts;
@@ -35,6 +33,8 @@ MaskedInput.prototype.selectField = function(e) {
 
     var end = start + this.parts[this.state].length;
 
+    this.fieldValue = this.input.value.slice(start, end);
+
     setTimeout((function() {
         instance.input.setSelectionRange(start, end);
     }), 0);
@@ -49,6 +49,7 @@ MaskedInput.prototype.handleKeys = function(e) {
         // Right
         this.nextField();
     } else if (e.keyCode == 9) {
+        // Tab
         if (e.shiftKey) {
             if (!this.prevField()) {
                 return;
@@ -70,6 +71,10 @@ MaskedInput.prototype.handleKeys = function(e) {
                 this.nextChoice();
             } else if (e.keyCode == 40) {
                 this.prevChoice();
+            } else {
+                this.inputChoice(e);
+                this.selectField();
+                return;
             }
         } else {
             //this.keypress(e);
@@ -80,6 +85,57 @@ MaskedInput.prototype.handleKeys = function(e) {
     e.stopImmediatePropagation();
     e.preventDefault();
     this.selectField();
+};
+
+MaskedInput.prototype.inputChoice = function(e) {
+    var part = this.parts[this.state];
+    var options = [];
+    var index;
+
+    var teststring = (
+        this.data[part.name] !== null ?
+        this.fieldValue.toLowerCase() :
+        ''
+    ) + String.fromCharCode(e.keyCode).toLowerCase();
+
+    if (this.data[part.name] === null) {
+        for (var i = 0; i < part.choice.length; i++) {
+            if (part.choice[i].toLowerCase().indexOf(teststring) === 0) {
+                index = i;
+                options.push(part.choice[i]);
+            }
+        }
+
+        console.log(options);
+
+        if (options.length < 1) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.data[part.name] = null;
+            this.updateView();
+            // Don't accept the input.
+            return;
+        } else if (options.length === 1) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.data[part.name] = index;
+            this.updateView();
+            // Select the appropriate item.
+            return;
+        } else {
+            // Accept the input, don't select an item.
+            return;
+        }
+    }
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+};
+
+MaskedInput.prototype.inputSequence = function(e) {
+    var part = this.parts[this.state];
+
+    var options = [];
 };
 
 MaskedInput.prototype.nextSequence = function(e) {
@@ -233,191 +289,3 @@ MaskedInput.prototype._register_handlers = function() {
         instance.handleKeys(e);
     });
 };
-
-/*
-MaskedInput.prototype.days_in_months = {
-    1: 31,
-    2: 28,
-    3: 31,
-    4: 30,
-    5: 31,
-    6: 30,
-    7: 31,
-    8: 31,
-    9: 30,
-    10: 31,
-    11: 30,
-    12: 31,
-    mm: 31
-};
-
-MaskedInput.prototype.handleMonth = function(e) {
-    if (e.keyCode == 38) {
-        // Up
-        value++;
-        if (value <= 12 && value >= 1) {
-            output = value < 10 ? '0' + value.toString() : value.toString();
-
-            this.setRangeText(output, 0, 2);
-        }
-    } else if (e.keyCode == 40) {
-        // Down
-        value--;
-        if (value <= 12 && value >= 1) {
-            output = value < 10 ? '0' + value.toString() : value.toString();
-
-            this.setRangeText(output, 0, 2);
-        }
-    }
-};
-
-MaskedInput.prototype.handleDay = function(e) {
-    if (e.keyCode == 38) {
-        // Up
-        value++;
-        if (value <= 31 && value >= 1) {
-            output = value < 10 ? '0' + value.toString() : value.toString();
-
-            this.setRangeText(output, 3, 5);
-        }
-    } else if (e.keyCode == 40) {
-        value--;
-        if (value <= 31 && value >= 1) {
-            output = value < 10 ? '0' + value.toString() : value.toString();
-
-            this.setRangeText(output, 3, 5);
-        }
-    }
-};
-
-MaskedInput.prototype.handleYear = function(e) {
-    if (e.keyCode == 38) {
-        // Up
-    } else if (e.keyCode == 40) {
-        // Down
-    }
-};
-
-MaskedInput.prototype.is_valid_day = function(day, month, year) {
-    var leapday;
-
-    int_day = parseInt(day);
-
-    // If the day is less than 1, return the smallest allowed value.
-    if (int_day < 1) {
-        return '01';
-    }
-
-    // If it is February, AND we haven't set a year, or it is a leap year
-    if (month === '02' && (year == 'yyyy' || is_leap_year(year))) {
-        leapday = 1;
-    } else {
-        leapday = 0;
-    }
-
-    // If the day is greater than it is allowed to be, return the largest
-    // allowed value.
-    if (int_day > (days_in_months[month] + leapday)) {
-        return (days_in_months[month] + leapday).toString();
-    }
-
-    if (int_day < 10) {
-        return '0' + int_day.toString();
-    } else {
-        return int_day.toString();
-    }
-
-};
-
-MaskedInput.prototype.is_leap_year = function(year) {
-    if (year % 4 !== 0) {
-        return false;
-    } else if (year % 100 !== 0) {
-        return true;
-    } else if (year % 400 === 0) {
-        return true;
-    } else {
-        return false;
-    }
-};
-*/
-
-/*
-input.onclick = function(e) {
-    console.log('Click', e);
-    e.preventDefault();
-    e.stopImmediatePropagation();
-};
-
-input.onblur = function(e) {
-    console.log('Blur', e);
-    e.preventDefault();
-};
-
-input.onkeypress = function(e) {
-    console.log('KeyPress', e);
-    var c = e.which || e.keyCode;
-
-    e.preventDefault();
-
-    var selected = this.value.substr(this.selectionStart, this.selectionEnd);
-
-    if (this.selectionStart === 0) {
-        // Day logic
-        if (selected == 'mm') {
-            if (c == 48 || c == 49) {
-                this.setRangeText('0' + String.fromCharCode(c), 0, 2);
-                this.setSelectionRange(0, 2);
-            } else {
-                this.setRangeText('0' + String.fromCharCode(c), 0, 2);
-                this.setSelectionRange(3, 5);
-                e.preventDefault();
-            }
-        } else if (selected == '00') {
-            if (c == 48 || c == 49) {
-                this.setRangeText('01', 0, 2);
-                this.setSelectionRange(3, 5);
-            }
-        } else if (selected == '01') {
-            this.setRangeText(
-                '1' + String.fromCharCode(
-                    Math.min(50, Math.max(48, c))
-                )
-            );
-            this.setSelectionRange(3, 5);
-        }
-
-    } else if (this.selectionStart === 3) {
-        // Month logic
-        if (selected == 'mm') {
-        } else if (selected[0] !== 'm') {
-            if (c == 48 || c ==49) {
-            }
-        }
-    } else if (this.selectionStart === 6) {
-        // Year logic
-    }
-
-};
-*/
-
-/*
-input.onselect = function(e) {
-    console.log('Select', e, this);
-    e.preventDefault();
-    e.stopImmediatePropagation();
-};
-
-input.ondragstart = function(e) {
-    console.log('DragStart', e, this);
-    e.preventDefault();
-    e.stopImmediatePropagation();
-};
-
-input.onmousedown = function(e) {
-    console.log('MouseDown', e, this);
-    this.focus();
-    e.preventDefault();
-    e.stopImmediatePropagation();
-};
-*/
